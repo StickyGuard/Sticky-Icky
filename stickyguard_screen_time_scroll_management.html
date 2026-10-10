@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StickyGuard - Scripture-Based Screen Time & Scroll Management</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Inter:wght@400;500;600;700;800&family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cork: {
+                            50: '#FAF6F0',
+                            100: '#F4ECE1',
+                            200: '#E6D7C3',
+                            300: '#D5BEA4',
+                            700: '#8C6849',
+                            800: '#5C412C',
+                            900: '#3D2A1D'
+                        },
+                        sticky: {
+                            yellow: '#FFF8BC',
+                            pink: '#FFE0EC',
+                            green: '#E0F8E7',
+                            blue: '#E0F2FE',
+                            warm: '#FFFDF0'
+                        }
+                    },
+                    fontFamily: {
+                        handwriting: ['Caveat', 'cursive'],
+                        sans: ['Inter', 'sans-serif'],
+                        serifVerse: ['Merriweather', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* Tactile Cork Background Pattern */
+        body {
+            background-color: #e5dac3;
+            background-image: radial-gradient(#c2b397 1.5px, transparent 1.5px), radial-gradient(#c2b397 1.5px, #e5dac3 1.5px);
+            background-size: 60px 60px;
+            background-position: 0 0, 30px 30px;
+        }
+
+        /* Tactile Sticky Note Card Effects */
+        .sticky-card {
+            box-shadow: 0 4px 14px rgba(61, 42, 29, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .sticky-card:hover {
+            transform: translateY(-3px) scale(1.005);
+            box-shadow: 0 12px 24px rgba(61, 42, 29, 0.16), 0 3px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Push Pin Graphics */
+        .pushpin {
+            filter: drop-shadow(2px 4px 3px rgba(0,0,0,0.3));
+        }
+
+        /* Custom Scrollbar */
+        .modal-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .modal-scroll::-webkit-scrollbar-track {
+            background: #f1ede4;
+            border-radius: 4px;
+        }
+        .modal-scroll::-webkit-scrollbar-thumb {
+            background: #c2b397;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="text-stone-800 font-sans antialiased min-h-screen flex flex-col justify-between selection:bg-amber-200">
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-40 bg-stone-900/90 backdrop-blur-md text-stone-100 border-b border-stone-800 py-4 px-6 sm:px-8 shadow-md">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <a href="#" class="flex items-center space-x-3 group">
+                <div class="w-10 h-10 bg-amber-200 rounded-xl shadow-md border border-amber-300 flex items-center justify-center rotate-[-3deg] group-hover:rotate-0 transition-transform">
+                    <i class="fa-solid fa-scroll text-amber-900 text-lg"></i>
+                </div>
+                <div>
+                    <span class="font-extrabold text-xl tracking-tight block leading-none text-white">StickyGuard</span>
+                    <span class="text-[10px] text-amber-300/80 font-semibold tracking-wider uppercase">Scripture Interceptor</span>
+                </div>
+            </a>
+
+            <!-- Nav Links -->
+            <nav class="hidden md:flex items-center space-x-6 text-xs font-bold">
+                <a href="#how-it-works" class="text-stone-300 hover:text-amber-300 transition">How It Works</a>
+                <a href="#simulator" class="text-stone-300 hover:text-amber-300 transition">Live Demo</a>
+                <a href="#features" class="text-stone-300 hover:text-amber-300 transition">Features</a>
+                <a href="#faq" class="text-stone-300 hover:text-amber-300 transition">FAQ</a>
+            </nav>
+
+            <div class="flex items-center space-x-3">
+                <button onclick="openModal('privacyModal')" class="hidden sm:inline-flex bg-stone-800 hover:bg-stone-700 text-amber-200 text-xs font-bold px-3.5 py-2 rounded-xl transition border border-stone-700 items-center gap-1.5">
+                    <i class="fa-solid fa-user-shield text-amber-400"></i>
+                    <span>Privacy & Accessibility</span>
+                </button>
+                <button onclick="openModal('downloadModal')" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition shadow-sm flex items-center gap-2">
+                    <i class="fa-brands fa-android text-emerald-300 text-sm"></i>
+                    <span>Get Android Beta</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Canvas -->
+    <main class="max-w-6xl mx-auto w-full px-4 sm:px-8 py-10 space-y-16 flex-grow">
+
+        <!-- Hero Section -->
+        <section class="grid md:grid-cols-12 gap-10 items-center pt-4">
+            <div class="md:col-span-7 space-y-6 text-center md:text-left">
+                <div class="inline-flex items-center space-x-2 bg-amber-100/90 border border-amber-300 px-3.5 py-1.5 rounded-full text-amber-900 text-xs font-bold uppercase tracking-wider shadow-xs">
+                    <i class="fa-solid fa-shield-halved text-amber-700"></i>
+                    <span>Scripture-Guided Screen Time Interceptor</span>
+                </div>
+                
+                <h1 class="text-4xl sm:text-5xl font-extrabold text-stone-900 tracking-tight leading-tight">
+                    Pause mindless scrolling with <span class="text-amber-800 font-handwriting text-5xl sm:text-6xl underline decoration-amber-400/80 decoration-wavy">Scripture</span>.
+                </h1>
+                
+                <p class="text-stone-700 text-base sm:text-lg leading-relaxed">
+                    StickyGuard intercepts targeted addictive apps on Android when limits are reached. To unlock access, you physically type out Bible verses character-for-character—replacing compulsive scrolling with mindful daily reflection.
+                </p>
+                
+                <div class="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-3 pt-2">
+                    <a href="#simulator" class="w-full sm:w-auto bg-amber-800 hover:bg-amber-900 text-white font-bold px-6 py-3.5 rounded-xl shadow-md transition text-xs sm:text-sm flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-play text-xs"></i>
+                        <span>Try Live Interceptor Simulator</span>
+                    </a>
+                    <button onclick="openModal('privacyModal')" class="w-full sm:w-auto bg-stone-900/90 hover:bg-black text-amber-100 font-bold px-6 py-3.5 rounded-xl shadow-xs transition text-xs sm:text-sm flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-user-shield text-emerald-400"></i>
+                        <span>Accessibility & Google Play Policy</span>
+                    </button>
+                </div>
+
+                <!-- Fast Specs Bar -->
+                <div class="pt-4 grid grid-cols-3 gap-2 border-t border-stone-400/40 text-left">
+                    <div>
+                        <span class="block text-base sm:text-lg font-extrabold text-stone-900">100%</span>
+                        <span class="text-[11px] text-stone-600 font-medium">Exact Character Match</span>
+                    </div>
+                    <div>
+                        <span class="block text-base sm:text-lg font-extrabold text-stone-900">Offline</span>
+                        <span class="text-[11px] text-stone-600 font-medium">100% On-Device Privacy</span>
+                    </div>
+                    <div>
+                        <span class="block text-base sm:text-lg font-extrabold text-stone-900">Custom</span>
+                        <span class="text-[11px] text-stone-600 font-medium">Translations (NIV, ESV, KJV)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hero Visual Sticky Note -->
+            <div class="md:col-span-5 relative flex justify-center">
+                <div class="w-full max-w-sm relative">
+                    <div class="absolute -top-4 left-1/2 -translate-x-1/2 z-20 pushpin">
+                        <i class="fa-solid fa-thumbtack text-red-600 text-2xl drop-shadow"></i>
+                    </div>
+                    
+                    <div class="sticky-card bg-sticky-yellow border border-amber-300 p-6 sm:p-7 rounded-2xl relative rotate-1 transition transform hover:rotate-0 duration-300">
+                        <div class="flex items-center justify-between text-xs text-amber-900 font-bold mb-4 border-b border-amber-200/80 pb-3">
+                            <span class="flex items-center gap-2">
+                                <i class="fa-brands fa-instagram text-pink-600 text-base"></i> Instagram Intercepted
+                            </span>
+                            <span class="bg-amber-200/80 text-amber-950 px-2 py-0.5 rounded text-[10px] font-mono">Limit Reached</span>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="bg-amber-50/90 p-4 rounded-xl border border-amber-200">
+                                <span class="text-[10px] font-extrabold tracking-wider text-amber-800 uppercase block mb-1">Scripture Lockout</span>
+                                <p class="font-serifVerse text-sm italic text-stone-900 leading-snug">"Be still, and know that I am God."</p>
+                                <span class="text-[11px] font-bold text-amber-900 block mt-1.5">— Psalm 46:10 (ESV)</span>
+                            </div>
+
+                            <div class="bg-white p-3.5 rounded-xl border border-amber-200 space-y-2">
+                                <div class="flex justify-between items-center text-[10px] font-bold text-stone-500">
+                                    <span>TYPE TO UNLOCK:</span>
+                                    <span class="text-emerald-700">65% Match</span>
+                                </div>
+                                <p class="font-mono text-xs text-stone-800 bg-amber-50/50 p-2.5 rounded-lg border border-amber-100">
+                                    Be still, and know <span class="bg-emerald-200 text-emerald-950 font-bold px-0.5">that I am|</span>
+                                </p>
+                                <div class="w-full bg-stone-200 h-2 rounded-full overflow-hidden">
+                                    <div class="bg-emerald-500 h-full w-[65%]"></div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between text-[11px] text-stone-600 font-medium px-1">
+                                <span><i class="fa-solid fa-lock text-amber-800 mr-1"></i> App locked on device</span>
+                                <a href="#simulator" class="text-amber-800 font-bold hover:underline">Try full test ↓</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Typing Simulator -->
+        <section id="simulator" class="pt-6">
+            <div class="text-center max-w-2xl mx-auto mb-8">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-amber-900 bg-amber-200/80 px-3 py-1 rounded-full border border-amber-300">Interactive Lock Screen Simulator</span>
+                <h2 class="text-2xl sm:text-3xl font-bold text-stone-900 mt-3">Try the Scripture Interceptor</h2>
+                <p class="text-stone-700 text-sm mt-1">Test how typing out scripture builds intentional friction before scrolling.</p>
+            </div>
+
+            <div class="max-w-xl mx-auto relative">
+                <div class="absolute -top-3 left-1/2 -translate-x-1/2 z-20 pushpin">
+                    <i class="fa-solid fa-thumbtack text-amber-800 text-2xl"></i>
+                </div>
+
+                <!-- Verse Selector Tabs -->
+                <div class="flex flex-wrap items-center justify-center gap-2 mb-4">
+                    <button onclick="selectSimVerse(0)" id="simTab-0" class="sim-tab-btn text-xs font-bold px-3 py-1.5 rounded-lg border transition bg-stone-900 text-white border-stone-900 shadow-xs">
+                        Philippians 4:8
+                    </button>
+                    <button onclick="selectSimVerse(1)" id="simTab-1" class="sim-tab-btn text-xs font-bold px-3 py-1.5 rounded-lg border transition bg-white text-stone-700 border-stone-300 hover:bg-stone-50">
+                        Psalm 46:10
+                    </button>
+                    <button onclick="selectSimVerse(2)" id="simTab-2" class="sim-tab-btn text-xs font-bold px-3 py-1.5 rounded-lg border transition bg-white text-stone-700 border-stone-300 hover:bg-stone-50">
+                        Galatians 5:22
+                    </button>
+                </div>
+
+                <div class="sticky-card bg-sticky-yellow border border-amber-300 p-6 sm:p-8 rounded-2xl relative space-y-5">
+                    <div class="flex justify-between items-center border-b border-amber-200/80 pb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                            <i class="fa-solid fa-shield-cat text-amber-700"></i> StickyGuard Lockout Demo
+                        </span>
+                        <span id="verseRef" class="text-xs font-bold text-amber-950 bg-amber-200/80 px-2.5 py-1 rounded">Philippians 4:8 (NIV)</span>
+                    </div>
+
+                    <div class="bg-amber-50/90 p-4 rounded-xl border border-amber-200">
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-800 block mb-1">Target Scripture:</span>
+                        <p id="verseText" class="font-serifVerse text-sm sm:text-base text-stone-900 leading-relaxed italic">
+                            "Whatever is true, whatever is noble, whatever is right, think on these things."
+                        </p>
+                    </div>
+
+                    <div id="unlockedOverlay" class="hidden bg-emerald-100 border border-emerald-300 text-emerald-950 p-5 rounded-xl text-center space-y-3">
+                        <div class="w-12 h-12 bg-emerald-200 text-emerald-800 rounded-full flex items-center justify-center mx-auto text-xl shadow-xs border border-emerald-300">
+                            <i class="fa-solid fa-lock-open"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-handwriting text-3xl font-bold text-emerald-950">App Unlocked!</h3>
+                            <p class="text-xs text-emerald-900 max-w-xs mx-auto mt-1">
+                                Great job! You typed the verse accurately. StickyGuard granted 15 minutes of mindful scroll time.
+                            </p>
+                        </div>
+                        <button onclick="resetSimulator()" class="bg-emerald-900 hover:bg-emerald-950 text-white font-bold text-xs px-4 py-2 rounded-lg transition">
+                            <i class="fa-solid fa-rotate-right mr-1"></i> Try Again
+                        </button>
+                    </div>
+
+                    <div id="typingContainer" class="space-y-3">
+                        <div class="flex justify-between items-center text-xs font-bold text-amber-950">
+                            <label for="typingInput">Type the verse character-for-character:</label>
+                            <span id="errorMsg" class="text-rose-700 text-[11px] hidden font-semibold flex items-center gap-1">
+                                <i class="fa-solid fa-triangle-exclamation"></i> Typo detected!
+                            </span>
+                        </div>
+                        
+                        <textarea id="typingInput" rows="3" oninput="handleTypingInput()" placeholder="Start typing the verse above..." class="w-full p-3.5 bg-white border border-amber-300 rounded-xl text-xs text-stone-800 focus:outline-none focus:ring-2 focus:ring-amber-800 font-mono resize-none shadow-inner leading-relaxed"></textarea>
+
+                        <div class="w-full bg-amber-200/60 h-2.5 rounded-full overflow-hidden">
+                            <div id="progressBar" class="bg-emerald-500 h-full w-0 transition-all duration-150"></div>
+                        </div>
+
+                        <div class="flex items-center justify-between text-xs font-semibold text-stone-600">
+                            <span id="statusMessage">Awaiting typing...</span>
+                            <span id="progressPercentage" class="font-mono bg-amber-200/80 text-amber-950 px-2 py-0.5 rounded text-[11px]">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Core Features Section -->
+        <section id="features" class="space-y-8 pt-6">
+            <div class="text-center max-w-xl mx-auto">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-amber-900 bg-amber-200/80 px-3 py-1 rounded-full border border-amber-300">Built for Intentionality</span>
+                <h2 class="text-2xl sm:text-3xl font-bold text-stone-900 mt-3">Core App Features</h2>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Feature 1 -->
+                <div class="sticky-card bg-sticky-warm border border-amber-200 p-6 rounded-2xl relative rotate-[-1deg]">
+                    <div class="w-10 h-10 bg-amber-200 rounded-xl flex items-center justify-center text-amber-900 font-bold mb-4 shadow-xs">
+                        <i class="fa-solid fa-shield-cat text-lg"></i>
+                    </div>
+                    <h3 class="font-bold text-stone-900 text-base mb-2">Foreground Interception</h3>
+                    <p class="text-xs text-stone-700 leading-relaxed">
+                        Detects target apps in real-time as they enter the foreground and presents the scripture lockout card instantly.
+                    </p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="sticky-card bg-sticky-pink border border-pink-200 p-6 rounded-2xl relative rotate-[1deg]">
+                    <div class="w-10 h-10 bg-pink-200 rounded-xl flex items-center justify-center text-pink-900 font-bold mb-4 shadow-xs">
+                        <i class="fa-solid fa-keyboard text-lg"></i>
+                    </div>
+                    <h3 class="font-bold text-stone-900 text-base mb-2">Scripture Typing Friction</h3>
+                    <p class="text-xs text-stone-700 leading-relaxed">
+                        Forces 100% accurate typing of Bible verses to break subconscious dopamine loops before granting access.
+                    </p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="sticky-card bg-sticky-green border border-emerald-200 p-6 rounded-2xl relative rotate-[-1deg]">
+                    <div class="w-10 h-10 bg-emerald-200 rounded-xl flex items-center justify-center text-emerald-900 font-bold mb-4 shadow-xs">
+                        <i class="fa-solid fa-book-bible text-lg"></i>
+                    </div>
+                    <h3 class="font-bold text-stone-900 text-base mb-2">Custom Translations</h3>
+                    <p class="text-xs text-stone-700 leading-relaxed">
+                        Supports pre-loaded translations (NIV, ESV, KJV, NLT, CSB) alongside custom memory verse decks.
+                    </p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="sticky-card bg-sticky-blue border border-sky-200 p-6 rounded-2xl relative rotate-[1deg]">
+                    <div class="w-10 h-10 bg-sky-200 rounded-xl flex items-center justify-center text-sky-900 font-bold mb-4 shadow-xs">
+                        <i class="fa-solid fa-lock text-lg"></i>
+                    </div>
+                    <h3 class="font-bold text-stone-900 text-base mb-2">100% On-Device Privacy</h3>
+                    <p class="text-xs text-stone-700 leading-relaxed">
+                        Zero data transmission, zero keylogging, and zero external analytics. Everything runs strictly on your phone.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ Section -->
+        <section id="faq" class="max-w-3xl mx-auto space-y-6 pt-6">
+            <div class="text-center">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-amber-900 bg-amber-200/80 px-3 py-1 rounded-full border border-amber-300">Got Questions?</span>
+                <h2 class="text-2xl sm:text-3xl font-bold text-stone-900 mt-3">Frequently Asked Questions</h2>
+            </div>
+            
+            <div class="space-y-3">
+                <div class="bg-white/90 border border-stone-300 rounded-xl p-5 shadow-xs">
+                    <h4 class="font-bold text-stone-900 text-sm">Why does StickyGuard require Accessibility Services?</h4>
+                    <p class="text-xs text-stone-700 mt-2 leading-relaxed">
+                        Android requires Accessibility permissions for app interceptors to detect when user-selected target applications (like social media apps) enter the foreground so it can display the scripture overlay screen.
+                    </p>
+                </div>
+
+                <div class="bg-white/90 border border-stone-300 rounded-xl p-5 shadow-xs">
+                    <h4 class="font-bold text-stone-900 text-sm">Does StickyGuard read my private messages or passwords?</h4>
+                    <p class="text-xs text-stone-700 mt-2 leading-relaxed">
+                        No. StickyGuard does not read window content, user text inputs outside the app, messages, passwords, or personal data. It only inspects the foreground application package name.
+                    </p>
+                </div>
+
+                <div class="bg-white/90 border border-stone-300 rounded-xl p-5 shadow-xs">
+                    <h4 class="font-bold text-stone-900 text-sm">Can I use my own Bible translations?</h4>
+                    <p class="text-xs text-stone-700 mt-2 leading-relaxed">
+                        Yes! StickyGuard includes standard translations (NIV, ESV, KJV, NLT, CSB) and allows you to manually input custom scriptures or memory verses.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer with Compliance Links -->
+    <footer class="bg-stone-900 text-stone-400 py-8 border-t border-stone-800">
+        <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center text-xs space-y-4 md:space-y-0">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-amber-200 rounded-lg flex items-center justify-center text-amber-900 font-bold">
+                    <i class="fa-solid fa-scroll"></i>
+                </div>
+                <div>
+                    <p class="font-bold text-stone-200 text-sm">StickyGuard</p>
+                    <p class="text-[11px] text-stone-500">Mindful screen time through scripture.</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center justify-center gap-6 font-semibold">
+                <button onclick="openModal('privacyModal')" class="hover:text-amber-300 transition underline">Google Play Privacy Policy & Accessibility Disclosure</button>
+                <button onclick="openModal('termsModal')" class="hover:text-amber-300 transition underline">Terms of Service</button>
+            </div>
+        </div>
+        <div class="max-w-6xl mx-auto mt-6 pt-4 border-t border-stone-800/80 text-center text-[10px] text-stone-500">
+            © 2026 StickyGuard. Built for intentional living.
+        </div>
+    </footer>
+
+    <!-- Google Play Compliant Privacy Policy Modal -->
+    <div id="privacyModal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-stone-50 border border-stone-200 rounded-2xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl relative">
+            
+            <!-- Modal Header -->
+            <div class="p-6 border-b border-stone-200 flex justify-between items-center bg-stone-100 rounded-t-2xl">
+                <div>
+                    <h3 class="text-lg font-bold text-stone-900">Privacy Policy & Accessibility Service Disclosure</h3>
+                    <p class="text-xs text-stone-500">Google Play Compliant • Updated 2026</p>
+                </div>
+                <button onclick="closeModal('privacyModal')" class="text-stone-400 hover:text-stone-700 text-2xl font-bold px-2">
+                    &times;
+                </button>
+            </div>
+
+            <!-- Modal Content (Scrollable) -->
+            <div class="p-6 overflow-y-auto space-y-6 text-xs text-stone-700 leading-relaxed modal-scroll">
+
+                <!-- Prominent Disclosure Callout -->
+                <div class="bg-amber-100/90 border-l-4 border-amber-600 p-4 rounded-r-xl space-y-2">
+                    <h4 class="font-bold text-amber-950 uppercase tracking-wider text-[11px]">Prominent Accessibility API Disclosure (Google Play Requirement)</h4>
+                    <p class="text-amber-900">
+                        StickyGuard requires the Android <strong>AccessibilityService API</strong> to perform its core screen-time interceptor functionality.
+                    </p>
+                    <ul class="list-disc list-inside space-y-1 text-amber-900">
+                        <li><strong>What is accessed:</strong> Foreground application package names (e.g., <code>com.instagram.android</code>).</li>
+                        <li><strong>Purpose:</strong> To detect when a user-designated guarded app is launched and present the scripture lockout overlay screen.</li>
+                        <li><strong>Data Collection & Sharing:</strong> StickyGuard <strong>does NOT collect, store, transmit, or share</strong> any personal data, typed text, screen content, or browsing activity.</li>
+                    </ul>
+                </div>
+
+                <section class="space-y-2">
+                    <h4 class="font-bold text-stone-900 text-sm">1. Overview</h4>
+                    <p>
+                        StickyGuard ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy outlines how our application interacts with your device and explains our strict non-collection data policy.
+                    </p>
+                </section>
+
+                <section class="space-y-2">
+                    <h4 class="font-bold text-stone-900 text-sm">2. Use of Android AccessibilityService API</h4>
+                    <p>
+                        In strict compliance with Google Play Developer Policies:
+                    </p>
+                    <ul class="list-disc list-inside space-y-1 pl-2">
+                        <li>StickyGuard uses the <code>AccessibilityService API</code> solely to identify when user-selected applications enter the foreground.</li>
+                        <li>StickyGuard <strong>does not</strong> alter user settings without permission.</li>
+                        <li>StickyGuard <strong>does not</strong> prevent users from disabling or uninstalling the app.</li>
+                        <li>StickyGuard <strong>does not</strong> record audio, capture keystrokes, read chat messages, access contact lists, or monitor internet traffic.</li>
+                    </ul>
+                </section>
+
+                <section class="space-y-2">
+                    <h4 class="font-bold text-stone-900 text-sm">3. Information Collection & Storage</h4>
+                    <p>
+                        All user preferences (such as selected guarded apps, custom Bible verses, and timer configurations) are stored locally on your device using Android's encrypted EncryptedSharedPreferences or Jetpack DataStore. No data ever leaves your hardware.
+                    </p>
+                </section>
+
+                <section class="space-y-2">
+                    <h4 class="font-bold text-stone-900 text-sm">4. Third-Party Data Sharing</h4>
+                    <p>
+                        StickyGuard does not incorporate third-party tracking SDKs, analytics frameworks that read app events, or advertising networks. We do not sell, trade, or share any information with third parties.
+                    </p>
+                </section>
+
+                <section class="space-y-2">
+                    <h4 class="font-bold text-stone-900 text-sm">5. Contact Information</h4>
+                    <p>
+                        If you have questions regarding this Privacy Policy or Google Play compliance, contact us at <code>privacy@stickyguard.app</code>.
+                    </p>
+                </section>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-stone-200 bg-stone-100 rounded-b-2xl flex justify-end">
+                <button onclick="closeModal('privacyModal')" class="bg-stone-900 hover:bg-black text-white font-bold px-5 py-2 rounded-xl text-xs transition">
+                    I Understand
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Download / Beta Modal -->
+    <div id="downloadModal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-stone-50 border border-stone-200 rounded-2xl max-w-md w-full p-6 relative shadow-2xl space-y-4">
+            <button onclick="closeModal('downloadModal')" class="absolute top-4 right-4 text-stone-400 hover:text-stone-700 text-xl font-bold px-2">
+                &times;
+            </button>
+            
+            <div class="text-center space-y-2">
+                <div class="w-12 h-12 bg-amber-100 text-amber-900 rounded-2xl flex items-center justify-center mx-auto text-xl border border-amber-200">
+                    <i class="fa-brands fa-android text-emerald-600"></i>
+                </div>
+                <h3 class="font-bold text-lg text-stone-900">Get StickyGuard Beta</h3>
+                <p class="text-xs text-stone-600 leading-relaxed">
+                    Select your preferred Android testing method:
+                </p>
+
+                <div class="space-y-2.5 pt-2">
+                    <button onclick="alert('Google Play Closed Beta link request registered!'); closeModal('downloadModal');" class="w-full bg-stone-900 hover:bg-black text-white font-bold p-3 rounded-xl text-xs transition flex items-center justify-center gap-2">
+                        <i class="fa-brands fa-google-play text-amber-400"></i>
+                        <span>Join Google Play Beta</span>
+                    </button>
+                    
+                    <button onclick="alert('Direct APK v1.0.4 download initiated!'); closeModal('downloadModal');" class="w-full bg-white hover:bg-stone-100 text-stone-800 border border-stone-300 font-bold p-3 rounded-xl text-xs transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-download text-stone-700"></i>
+                        <span>Download Direct APK (v1.0.4)</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terms Modal -->
+    <div id="termsModal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-stone-50 border border-stone-200 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            <h3 class="text-lg font-bold text-stone-900">Terms of Service</h3>
+            <p class="text-xs text-stone-700 leading-relaxed">
+                StickyGuard is provided "as is" as a personal focus and screen-time management tool. Users are responsible for configuring app limits appropriate for their productivity goals.
+            </p>
+            <div class="flex justify-end">
+                <button onclick="closeModal('termsModal')" class="bg-stone-900 text-white px-4 py-2 rounded-xl text-xs font-bold">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        const SIMULATOR_VERSES = [
+            {
+                text: "Whatever is true, whatever is noble, whatever is right, think on these things.",
+                ref: "Philippians 4:8 (NIV)"
+            },
+            {
+                text: "Be still, and know that I am God.",
+                ref: "Psalm 46:10 (ESV)"
+            },
+            {
+                text: "But the fruit of the Spirit is love, joy, peace, patience, kindness, goodness, faithfulness.",
+                ref: "Galatians 5:22 (NIV)"
+            }
+        ];
+
+        let currentSimIndex = 0;
+
+        function selectSimVerse(index) {
+            currentSimIndex = index;
+            for (let i = 0; i < SIMULATOR_VERSES.length; i++) {
+                const btn = document.getElementById(`simTab-${i}`);
+                if (i === index) {
+                    btn.className = "sim-tab-btn text-xs font-bold px-3 py-1.5 rounded-lg border transition bg-stone-900 text-white border-stone-900 shadow-xs";
+                } else {
+                    btn.className = "sim-tab-btn text-xs font-bold px-3 py-1.5 rounded-lg border transition bg-white text-stone-700 border-stone-300 hover:bg-stone-50";
+                }
+            }
+            resetSimulator();
+        }
+
+        function resetSimulator() {
+            const verse = SIMULATOR_VERSES[currentSimIndex];
+            document.getElementById('verseText').innerText = `"${verse.text}"`;
+            document.getElementById('verseRef').innerText = verse.ref;
+
+            const inputArea = document.getElementById('typingInput');
+            inputArea.value = '';
+            inputArea.disabled = false;
+            
+            document.getElementById('progressBar').style.width = '0%';
+            document.getElementById('progressPercentage').innerText = '0%';
+            document.getElementById('statusMessage').innerText = 'Awaiting typing...';
+            document.getElementById('statusMessage').className = 'text-stone-600';
+            document.getElementById('errorMsg').classList.add('hidden');
+
+            document.getElementById('unlockedOverlay').classList.add('hidden');
+            document.getElementById('typingContainer').classList.remove('hidden');
+        }
+
+        function handleTypingInput() {
+            const targetText = SIMULATOR_VERSES[currentSimIndex].text;
+            const inputVal = document.getElementById('typingInput').value;
+            const errorMsg = document.getElementById('errorMsg');
+            const progressBar = document.getElementById('progressBar');
+            const progressPercentage = document.getElementById('progressPercentage');
+            const statusMessage = document.getElementById('statusMessage');
+
+            if (inputVal === "") {
+                statusMessage.innerText = "Awaiting typing...";
+                statusMessage.className = "text-stone-600";
+                progressPercentage.innerText = "0%";
+                progressBar.style.width = '0%';
+                errorMsg.classList.add('hidden');
+                return;
+            }
+
+            if (targetText.startsWith(inputVal)) {
+                errorMsg.classList.add('hidden');
+                const percentage = Math.min(100, Math.round((inputVal.length / targetText.length) * 100));
+                progressBar.style.width = `${percentage}%`;
+                progressPercentage.innerText = `${percentage}%`;
+
+                if (inputVal === targetText) {
+                    document.getElementById('typingContainer').classList.add('hidden');
+                    document.getElementById('unlockedOverlay').classList.remove('hidden');
+                } else {
+                    statusMessage.innerText = "Typing accurately...";
+                    statusMessage.className = "text-amber-800 font-bold";
+                }
+            } else {
+                errorMsg.classList.remove('hidden');
+                statusMessage.innerText = "Typo detected!";
+                statusMessage.className = "text-rose-700 font-bold";
+            }
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
